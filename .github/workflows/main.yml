@@ -17,6 +17,10 @@ jobs:
       with:
         python-version: 3.11
 
+    - name: Archive code
+      run: 
+        zip -r ../function.zip .
+
     - name: Install dependencies
       run: |
         mkdir python
@@ -24,7 +28,8 @@ jobs:
         pip install -r deployment/requirements.txt -t python/
 
     - name: Archive Layer content
-      run: zip -r layer.zip python/
+      run: 
+        zip -r layer.zip python/
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -42,3 +47,16 @@ jobs:
     - name: Update Lambda Function Configuration
       run: |
         aws lambda update-function-configuration --function-name generate_weather --layers ${{ steps.publish_layer.outputs.layer_version_arn }}
+
+    - name: cd back to root
+      run: 
+        cd ..
+
+    - name: Deploy to Lambda
+      uses: appleboy/lambda-action@master
+      with:
+        aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws_region: us-east-1
+        function_name: generate_weather
+        zip_file: function.zip
