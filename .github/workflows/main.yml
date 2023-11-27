@@ -16,14 +16,29 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.11
-    
-    - name: Deploy code to Lambda
-      uses: qubitro/action-lambda-python-zip@v1.0
+
+    - name: Install dependencies
+      run: |
+        mkdir python
+        python -m pip install --upgrade pip
+        pip install -r deployment/requirements.txt -t python/
+
+    - name: Archive Layer content
+      run: zip -r layer.zip python/
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
       with:
-        lambda_layer_arn: 'arn:aws:lambda:us-east-1:513302492239:layer:weather_layer'
-        lambda_function_name: 'generate_weather'
-        requirements_txt: 'deployment/requirements.txt'
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_DEFAULT_REGION: 'us-east-1'
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Publish Layer
+      id: publish_layer
+      run: |
+        LAYER_VERSION_ARN=$(aws lambda publish-layer-version --layer-name weather_layer --zip-file fileb://layer.zip --compatible-runtimes python3.11 --output text --query 'LayerVersionArn')
+        echo "::set-output name=layer_version_arn::$LAYER_VERSION_ARN"
+        
+    - name: Update Lambda Function Configuration
+      run: |
+        aws lambda update-function-configuration --function-name generate_weather --layers ${{ steps.publish_layer.outputs.layer_version_arn }}
