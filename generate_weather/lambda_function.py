@@ -1,6 +1,8 @@
 from openai import OpenAI
 import os
 from datetime import datetime
+import pytz
+
 import json
 
 client = OpenAI()
@@ -22,7 +24,7 @@ def generate_poem(info: dict):
     """
 
     
-    now = datetime.now()
+    now = datetime.now(tz=pytz.timezone('Asia/Shanghai'))
 
     dt_string = now.strftime("%H:%M:%S")
     
@@ -78,7 +80,15 @@ def generate(info: dict):
     return poem, image_url
 
 def lambda_handler(event, context):
-	paramters = event.get("queryStringParameters")
-	poem, image_url = generate(paramters)
- 
-	return json.dumps({"poem": poem, "image_url": image_url})
+	parameters = event.get("queryStringParameters")
+	poem, image_url = generate(parameters)
+	
+	return {
+		'statusCode': 200,
+		'headers': {
+			'Content-Type': 'application/json',
+			'Access-Control-Allow-Origin': '*'
+		},
+		'body': json.dumps({"poem": poem, "image_url": image_url}),
+		"isBase64Encoded": False
+	}
