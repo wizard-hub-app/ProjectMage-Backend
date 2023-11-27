@@ -42,7 +42,7 @@ def generate_poem(info: dict):
     )
     poem = response.choices[0].message.content
     
-    return user_input, Poem
+    return user_input, poem
 
 def generate_image(user_input: str, poem: str):
     image_poem_prompt = f"""
