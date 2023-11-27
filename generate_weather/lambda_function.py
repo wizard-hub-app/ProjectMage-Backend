@@ -78,12 +78,7 @@ def generate(info: dict):
     return poem, image_url
 
 def lambda_handler(event, context):
-	paramters = event.get("rawQueryString")
-	info = {}
-	for paramter in paramters.split("&"):
-		key, value = paramter.split("=")
-		info[key] = value
-  
-	poem, image_url = generate(info)
+	paramters = event.get("queryStringParameters")
+	poem, image_url = generate(paramters)
  
 	return json.dumps({"poem": poem, "image_url": image_url})
