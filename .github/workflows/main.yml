@@ -28,4 +28,4 @@ jobs:
         aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws_region: us-east-1
         function_name: generate_weather
-        zip_file: function.zip
+        zip_file: ../function.zip
